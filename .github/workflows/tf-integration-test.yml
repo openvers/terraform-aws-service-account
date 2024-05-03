@@ -58,11 +58,9 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       if: ${{ !github.event.act }}
       with:
-        aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
         aws-region: ${{ secrets.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 1200
-        role-session-name: github-actions-session
         role-skip-session-tagging: true
         mask-aws-account-id: true
         retry-max-attempts: 3
@@ -179,11 +177,9 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       if: ${{ !github.event.act }}
       with:
-        aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
         aws-region: ${{ secrets.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 1200
-        role-session-name: github-actions-session
         role-skip-session-tagging: true
         mask-aws-account-id: true
         retry-max-attempts: 3
@@ -242,11 +238,9 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       if: ${{ !github.event.act }}
       with:
-        aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
         aws-region: ${{ secrets.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 1200
-        role-session-name: github-actions-session
         role-skip-session-tagging: true
         mask-aws-account-id: true
         retry-max-attempts: 3
