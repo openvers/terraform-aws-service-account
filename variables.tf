@@ -19,9 +19,15 @@ variable "service_account_path" {
 ## ---------------------------------------------------------------------------------------------------------------------
 
 variable "roles_list" {
-  type        = list
+  type        = list(any)
   description = "List of AWS IAM Roles to bind to the new Service Account"
   default     = []
+}
+
+variable "resource_list" {
+  type        = list(any)
+  description = "List of AWS Resources to bind acces to the new Service Account"
+  default     = ["*"]
 }
 
 variable "tags" {

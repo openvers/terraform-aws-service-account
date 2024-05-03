@@ -4,7 +4,7 @@ Defines a provider to retrieve access tokens via normal requests with IP Bound S
 with seperate aliases to define duties by Service Account. This provider is termed
 "accountgen", and its purpose is just for generating minimum priviledged Service Accounts.
 */
-terraform{
+terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
@@ -37,8 +37,8 @@ locals {
   project = "cloud-auth"
 }
 
-locals  {
-  suffix     = "${random_string.this}-${local.program}-${local.project}"
+locals {
+  suffix = "${random_string.this.id}-${local.program}-${local.project}"
 
   roles_list = distinct(concat(var.roles_list, [
     "iam:DeleteRole",
@@ -52,12 +52,26 @@ locals  {
     "iam:DeleteRolePolicy",
   ]))
 
-  tags    = merge(var.tags, {
+  tags = merge(var.tags, {
     program = local.program
     project = local.project
     env     = "dev"
   })
 }
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AWS IAM GROUP RESOURCE
+##
+## This resource defines an IAM User Group in AWS.
+##
+## Parameters:
+## - `name`: The name of the IAM user group.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_group" "this" {
+  provider = aws.accountgen
+  name     = "${local.suffix}-group"
+}
+
 
 ## ---------------------------------------------------------------------------------------------------------------------
 ## AWS IAM USER RESOURCE
@@ -70,6 +84,26 @@ locals  {
 resource "aws_iam_user" "this" {
   provider = aws.accountgen
   name     = var.service_account_name
+}
+
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AWS IAM GROUP MEMBERSHIP RESOURCE
+##
+## This resource registers an IAM User to a IAM User Group.
+##
+## Parameters:
+## - `name`: The name of the IAM user group membership.
+## - `group`: The name of the IAM user group.
+## - `users`: A list of IAM users to be assigned to the IAM user group.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_group_membership" "this" {
+  provider = aws.accountgen
+  name     = "${local.suffix}-group-memberhip"
+  group    = aws_iam_group.this.name
+  users    = [
+    aws_iam_user.this.name
+  ]
 }
 
 
@@ -92,7 +126,22 @@ data "aws_iam_policy_document" "this" {
     sid       = "PolicyDoc${replace(local.suffix, "-", "")}"
     effect    = "Allow"
     actions   = local.roles_list
-    resources = ["*"]
+    resources = var.resource_list
+    condition {
+      test     = "StringEquals"
+      variable = "iam:ResourceTag/program"
+      values   = [
+        local.program
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:ResourceTag/project"
+      values   = [
+        local.project
+      ]
+    }
   }
 
   depends_on = [aws_iam_user.this]
@@ -100,21 +149,21 @@ data "aws_iam_policy_document" "this" {
 
 
 ## ---------------------------------------------------------------------------------------------------------------------
-## AWS IAM USER POLICY RESOURCE
+## AWS IAM GROUP POLICY RESOURCE
 ##
-## This resource attaches an IAM policy to a specified IAM user.
+## This resource attaches an IAM policy to a specified IAM user group.
 ##
 ## Parameters:
 ## - `name`: The name of the IAM user policy.
 ## - `user`: The IAM user to which the policy is attached.
 ## - `policy`: The IAM policy document JSON.
 ## ---------------------------------------------------------------------------------------------------------------------
-resource "aws_iam_user_policy" "this" {
+resource "aws_iam_group_policy" "this" {
   provider = aws.accountgen
 
-  name     = "UserPolicy${replace(local.suffix, "-", "")}"
-  user     = aws_iam_user.this.name
-  policy   = data.aws_iam_policy_document.this.json
+  name   = "UserPolicy${replace(local.suffix, "-", "")}"
+  group   = aws_iam_group.this.name
+  policy = data.aws_iam_policy_document.this.json
 }
 
 
@@ -128,9 +177,9 @@ resource "aws_iam_user_policy" "this" {
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_access_key" "this" {
   provider   = aws.accountgen
-  depends_on = [aws_iam_user_policy.this]
+  depends_on = [aws_iam_group_policy.this]
 
-  user       = aws_iam_user.this.name
+  user = aws_iam_user.this.name
 }
 
 
@@ -143,7 +192,7 @@ resource "aws_iam_access_key" "this" {
 ## - `create_duration`: The duration for which to wait before proceeding with the next steps.
 ## ---------------------------------------------------------------------------------------------------------------------
 resource "time_sleep" "key_propagation" {
-  depends_on      = [aws_iam_access_key.this]
+  depends_on = [aws_iam_access_key.this]
 
   create_duration = "60s"
 }
