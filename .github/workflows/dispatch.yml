@@ -40,7 +40,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 1200
-          role-session-name: github-actions-session
+          role-skip-session-tagging: true
+          mask-aws-account-id: true
+          retry-max-attempts: 3
           
       - name: Configure AWS Credentials - Github Runner
         uses: aws-actions/configure-aws-credentials@v4
@@ -49,8 +51,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 1200
-          role-session-name: github-actions-session
+          role-skip-session-tagging: true
           mask-aws-account-id: true
+          retry-max-attempts: 3
   
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -86,7 +89,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 1200
-          role-session-name: github-actions-session
+          role-skip-session-tagging: true
+          mask-aws-account-id: true
+          retry-max-attempts: 3
           
       - name: Configure AWS Credentials - Github Runner
         uses: aws-actions/configure-aws-credentials@v4
@@ -96,7 +101,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-duration-seconds: 1200
           role-session-name: github-actions-session
+          role-skip-session-tagging: true
           mask-aws-account-id: true
+          retry-max-attempts: 3
   
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

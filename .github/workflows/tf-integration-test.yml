@@ -50,8 +50,9 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 1200
-        role-session-name: github-actions-session
+        role-skip-session-tagging: true
         mask-aws-account-id: true
+        retry-max-attempts: 3
 
     # Install the latest version of the Terraform CLI
     - name: Setup Terraform
@@ -157,8 +158,9 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 1200
-        role-session-name: github-actions-session
+        role-skip-session-tagging: true
         mask-aws-account-id: true
+        retry-max-attempts: 3
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
@@ -206,8 +208,9 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 1200
-        role-session-name: github-actions-session
+        role-skip-session-tagging: true
         mask-aws-account-id: true
+        retry-max-attempts: 3
     
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
