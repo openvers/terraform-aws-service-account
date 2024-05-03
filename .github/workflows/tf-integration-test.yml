@@ -21,49 +21,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  aws-credentials:
-    name: AWS Credentials Config
-    runs-on: ubuntu-latest
-    outputs:
-      aws-session-token: ${{ steps.aws-creds.outputs.aws-session-token }}
-
-    steps:
-      - name: Configure AWS Credentials
-        id: aws-creds
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_CLIENT_SECRET }}
-          aws-region: ${{ secrets.AWS_REGION}}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-          role-duration-seconds: 1200
-          role-session-name: github-actions-session
-    
-  aws-credentials-production:
-    name: AWS Credentials Config Production
-    runs-on: ubuntu-latest
-    environment: production
-    outputs:
-      aws-session-token: ${{ steps.aws-creds-prod.outputs.aws-session-token }}
-    
-    steps:
-      - name: Configure AWS Credentials
-        id: aws-creds-prod
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_CLIENT_SECRET }}
-          aws-region: ${{ secrets.AWS_REGION}}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-          role-duration-seconds: 1200
-          role-session-name: github-actions-session
-
   terraform-integration-plan:
     name: 'Terraform Plan'
     if: github.actor != 'github-actions[bot]'
-    needs: [ aws-credentials ]
     runs-on: ubuntu-latest
     
     defaults:
@@ -71,7 +31,6 @@ jobs:
           working-directory: "./test"
     env:
       #this is needed since we are running terraform with read-only permissions
-      AWS_SESSION_TOKEN: ${{needs.aws-credentials.outputs.aws-session-token}}
       ARM_SKIP_PROVIDER_REGISTRATION: true
     
     outputs:
@@ -81,12 +40,24 @@ jobs:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      id: aws-creds
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_CLIENT_SECRET }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        role-duration-seconds: 1200
+        role-session-name: github-actions-session
+        mask-aws-account-id: true
 
     # Install the latest version of the Terraform CLI
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN_AWS_WORKSPACE }}
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
         terraform_wrapper: false
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
@@ -168,24 +139,32 @@ jobs:
     if: github.event.act || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
-    needs: [ terraform-integration-plan, aws-credentials-production ]
     defaults:
         run:
           working-directory: "./test"
 
-    env:
-      AWS_SESSION_TOKEN: ${{needs.aws-credentials-production.outputs.aws-session-token}}
-    
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      id: aws-creds
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_CLIENT_SECRET }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        role-duration-seconds: 1200
+        role-session-name: github-actions-session
+        mask-aws-account-id: true
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN_AWS_WORKSPACE }}
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
@@ -208,24 +187,33 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     environment: production
-    needs: [ terraform-integration-apply, aws-credentials-production ]
+    needs: [ terraform-integration-apply ]
     defaults:
       run:
         working-directory: "./test"
 
-    env:
-      AWS_SESSION_TOKEN: ${{needs.aws-credentials-production.outputs.aws-session-token}}
-        
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
     
+    - name: Configure AWS Credentials
+      id: aws-creds
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_CLIENT_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_CLIENT_SECRET }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        role-duration-seconds: 1200
+        role-session-name: github-actions-session
+        mask-aws-account-id: true
+    
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN_AWS_WORKSPACE }}
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
     
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init

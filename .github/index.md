@@ -33,14 +33,12 @@ EOF
 # Try the Terraform Read job first
 act -j terraform-dispatch-read \
     -e .github/local.json \
-    --input terraform_operation=plan \
     --secret-file ~/creds/aws.secrets \
     --remote-name $(git remote show)
 
 # Use the Terraform Write job to apply/destroy the infra configuration
 act -j terraform-dispatch-write \
     -e .github/local.json \
-    --input terraform_operation=apply \
     --secret-file ~/creds/aws.secrets \
     --remote-name $(git remote show)
 ```
@@ -54,7 +52,7 @@ mkdir /tmp/artifacts
 # Run the full Integration test with
 act -j terraform-integration-destroy \
     -e .github/local.json \
-    --secret-file ~/development/terraform/creds/aws.secrets \
+    --secret-file ~/creds/aws.secrets \
     --remote-name $(git remote show) \ 
     --artifact-server-path /tmp/artifacts
 ```
@@ -64,5 +62,6 @@ act -j terraform-integration-destroy \
 ```
 act -j terraform-unit-tests \
     -e .github/local.json \
-    --remote-name sim-parables
+    --secret-file ~/creds/aws.secrets \
+    --remote-name $(git remote show)
 ```
