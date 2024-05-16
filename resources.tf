@@ -40,18 +40,6 @@ locals {
 locals {
   suffix = "${random_string.this.id}-${local.program}-${local.project}"
 
-  roles_list = distinct(concat(var.roles_list, [
-    "iam:DeleteRole",
-    "iam:ListInstanceProfilesForRole",
-    "iam:ListAttachedRolePolicies",
-    "iam:ListRolePolicies",
-    "iam:GetRole",
-    "iam:CreateRole",
-    "iam:GetRolePolicy",
-    "iam:PutRolePolicy",
-    "iam:DeleteRolePolicy",
-  ]))
-
   tags = merge(var.tags, {
     program = local.program
     project = local.project
@@ -101,7 +89,7 @@ resource "aws_iam_group_membership" "this" {
   provider = aws.accountgen
   name     = "${local.suffix}-group-memberhip"
   group    = aws_iam_group.this.name
-  users    = [
+  users = [
     aws_iam_user.this.name
   ]
 }
@@ -125,23 +113,8 @@ data "aws_iam_policy_document" "this" {
   statement {
     sid       = "PolicyDoc${replace(local.suffix, "-", "")}"
     effect    = "Allow"
-    actions   = local.roles_list
+    actions   = var.roles_list
     resources = var.resource_list
-    condition {
-      test     = "StringEquals"
-      variable = "iam:ResourceTag/program"
-      values   = [
-        local.program
-      ]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "iam:ResourceTag/project"
-      values   = [
-        local.project
-      ]
-    }
   }
 
   depends_on = [aws_iam_user.this]
@@ -162,7 +135,7 @@ resource "aws_iam_group_policy" "this" {
   provider = aws.accountgen
 
   name   = "UserPolicy${replace(local.suffix, "-", "")}"
-  group   = aws_iam_group.this.name
+  group  = aws_iam_group.this.name
   policy = data.aws_iam_policy_document.this.json
 }
 

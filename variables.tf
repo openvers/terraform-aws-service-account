@@ -21,7 +21,25 @@ variable "service_account_path" {
 variable "roles_list" {
   type        = list(any)
   description = "List of AWS IAM Roles to bind to the new Service Account"
-  default     = []
+  default = [
+    "iam:DeleteRole",
+    "iam:ListInstanceProfilesForRole",
+    "iam:ListAttachedRolePolicies",
+    "iam:ListRolePolicies",
+    "iam:AttachRolePolicy",
+    "iam:TagRole",
+    "iam:GetRole",
+    "iam:CreateRole",
+    "iam:CreatePolicy",
+    "iam:GetPolicy",
+    "iam:GetRolePolicy",
+    "iam:PutRolePolicy",
+    "iam:DeleteRolePolicy",
+    "iam:GetPolicyVersion",
+    "iam:ListPolicyVersions",
+    "iam:DetachRolePolicy",
+    "iam:DeletePolicy",
+  ]
 }
 
 variable "resource_list" {

@@ -16,6 +16,56 @@ terraform {
   }
 }
 
+locals {
+  assume_role_policies = [
+    {
+      effect = "Allow"
+      actions = [
+        "sts:AssumeRoleWithWebIdentity"
+      ]
+      principals = [{
+        type        = "Federated"
+        identifiers = [var.OIDC_PROVIDER_ARN]
+      }]
+      conditions = [
+        {
+          test     = "StringLike"
+          variable = "token.actions.githubusercontent.com:sub"
+          values = [
+            "repo:${var.GITHUB_REPOSITORY}:environment:${var.GITHUB_ENV}",
+            "repo:${var.GITHUB_REPOSITORY}:ref:${var.GITHUB_REF}"
+          ]
+        },
+        {
+          test     = "ForAllValues:StringEquals"
+          variable = "token.actions.githubusercontent.com:iss"
+          values = [
+            "https://token.actions.githubusercontent.com",
+          ]
+        },
+        {
+          test     = "ForAllValues:StringEquals"
+          variable = "token.actions.githubusercontent.com:aud"
+          values = [
+            "sts.amazonaws.com",
+          ]
+        },
+      ]
+    },
+    {
+      effect = "Allow"
+      actions = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+      principals = [{
+        type        = "AWS"
+        identifiers = [module.aws_service_account.service_account_arn]
+      }]
+      conditions = []
+    }
+  ]
+}
 
 ## ---------------------------------------------------------------------------------------------------------------------
 ## AWS PROVIDER
@@ -47,5 +97,44 @@ module "aws_service_account" {
 
   providers = {
     aws.accountgen = aws.accountgen
+  }
+}
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AWS PROVIDER
+##
+## Configures the AWS provider with new Service Account Authentication.
+## ---------------------------------------------------------------------------------------------------------------------
+provider "aws" {
+  alias = "auth_session"
+
+  access_key = module.aws_service_account.access_id
+  secret_key = module.aws_service_account.access_token
+  # An ambiguous error is thrown without declaring a profile
+  # However, access_key/secret_key override profile credentials
+  # profile = "default"
+}
+
+##---------------------------------------------------------------------------------------------------------------------
+## AWS SERVICE ACCOUNT MODULE
+##
+## This module provisions an AWS service account along with associated roles and security groups.
+##
+## Parameters:
+## - `service_account_name`: The display name of the new AWS Service Account.
+## - `service_account_path`: The new AWS Service Account IAM Path.
+## - `roles_list`: List of IAM roles to bing to new AWS Service Account.
+##
+## Providers:
+## - `aws.accountgen`: Alias for the AWS provider for generating service accounts.
+##---------------------------------------------------------------------------------------------------------------------
+module "aws_identity_federation_roles" {
+  source     = "../modules/identity_federation_roles"
+  depends_on = [module.aws_service_account]
+
+  assume_role_policies = local.assume_role_policies
+
+  providers = {
+    aws.auth_session = aws.auth_session
   }
 }
