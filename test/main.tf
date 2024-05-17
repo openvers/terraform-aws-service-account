@@ -110,20 +110,15 @@ provider "aws" {
 
   access_key = module.aws_service_account.access_id
   secret_key = module.aws_service_account.access_token
-  # An ambiguous error is thrown without declaring a profile
-  # However, access_key/secret_key override profile credentials
-  # profile = "default"
 }
 
 ##---------------------------------------------------------------------------------------------------------------------
-## AWS SERVICE ACCOUNT MODULE
+## AWS IDENTITY FEDERATION ROLES MODULE
 ##
-## This module provisions an AWS service account along with associated roles and security groups.
+## This module configured IAM Trust policies to provide OIDC federated access from Github Actions to AWS.
 ##
 ## Parameters:
-## - `service_account_name`: The display name of the new AWS Service Account.
-## - `service_account_path`: The new AWS Service Account IAM Path.
-## - `roles_list`: List of IAM roles to bing to new AWS Service Account.
+## - `assume_role_policies`: List of OIDC trust policies.
 ##
 ## Providers:
 ## - `aws.accountgen`: Alias for the AWS provider for generating service accounts.
