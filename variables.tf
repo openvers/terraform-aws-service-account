@@ -39,6 +39,12 @@ variable "roles_list" {
     "iam:ListPolicyVersions",
     "iam:DetachRolePolicy",
     "iam:DeletePolicy",
+    "iam:ListAttachedGroupPolicies",
+    "iam:AttachGroupPolicy",
+    "iam:GetGroupPolicy",
+    "iam:PutGroupPolicy",
+    "iam:DeleteGroupPolicy",
+    "iam:DetachGroupPolicy"
   ]
 }
 

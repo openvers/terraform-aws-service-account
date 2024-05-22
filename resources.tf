@@ -134,7 +134,7 @@ data "aws_iam_policy_document" "this" {
 resource "aws_iam_group_policy" "this" {
   provider = aws.accountgen
 
-  name   = "UserPolicy${replace(local.suffix, "-", "")}"
+  name   = "GroupPolicy${replace(local.suffix, "-", "")}"
   group  = aws_iam_group.this.name
   policy = data.aws_iam_policy_document.this.json
 }

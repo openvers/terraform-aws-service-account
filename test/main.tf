@@ -127,7 +127,8 @@ module "aws_identity_federation_roles" {
   source     = "../modules/identity_federation_roles"
   depends_on = [module.aws_service_account]
 
-  assume_role_policies = local.assume_role_policies
+  assume_role_policies  = local.assume_role_policies
+  service_account_group = module.aws_service_account.group_name
 
   providers = {
     aws.auth_session = aws.auth_session

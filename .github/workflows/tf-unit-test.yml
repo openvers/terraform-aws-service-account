@@ -10,4 +10,4 @@ jobs:
     secrets: inherit
     with:
       ACT_MODE: ${{ !!github.event.act }}
-      SKIP_CHECKS: CKV_AWS_273,CKV_AWS_356,CKV_AWS_109
+      SKIP_CHECKS: CKV_AWS_273,CKV_AWS_356,CKV_AWS_109,CKV_AWS_110

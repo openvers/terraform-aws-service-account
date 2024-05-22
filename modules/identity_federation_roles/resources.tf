@@ -136,7 +136,7 @@ data "aws_iam_policy_document" "permissions" {
 resource "aws_iam_policy" "permissions" {
   provider = aws.auth_session
 
-  name        = "${var.policy_name}-${local.suffix}"
+  name        = "${var.policy_name}-${local.suffix}-oidc-permissions"
   description = var.policy_description
   policy      = data.aws_iam_policy_document.permissions.json
 }
@@ -158,3 +158,58 @@ resource "aws_iam_role_policy_attachment" "this" {
   policy_arn = aws_iam_policy.permissions.arn
 }
 
+## ---------------------------------------------------------------------------------------------------------------------
+## AWS IAM POLICY DOCUMENT DATA SOURCE
+##
+## This data source defines a resouce based policy to allow assume role to the Service Account group for the OIDC role.
+## ---------------------------------------------------------------------------------------------------------------------
+data "aws_iam_policy_document" "group" {
+  provider = aws.auth_session
+
+  statement {
+    sid    = "GroupPolicy${replace("${var.policy_name}-${local.suffix}", "-", "")}"
+    effect = "Allow"
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession"
+    ]
+    resources = [aws_iam_role.this.arn]
+  }
+}
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AWS IAM POLICY RESOUCE
+##
+## This resouce creates an IAM policy with the policy contents defined in the 
+## data.aws_iam_policy_document.group JSON document.
+##
+## Parameters:
+## - `name`: IAM policy name.
+## - `description`: IAM policy description.
+## - `policy`: AWS policy JSON document defining IAM permissions.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_policy" "group" {
+  provider = aws.auth_session
+
+  name        = "${var.policy_name}-${local.suffix}-assume-role"
+  description = var.policy_description
+  policy      = data.aws_iam_policy_document.group.json
+}
+
+
+## ---------------------------------------------------------------------------------------------------------------------
+## AWS IAM POLICY RESOUCE
+##
+## This resouce attches an IAM policy with the policy contents defined in the 
+## data.aws_iam_policy_document.group JSON document to a specific IAM group.
+##
+## Parameters:
+## - `group`: IAM user group name.
+## - `polic_arn`: IAM policy ARN.
+## ---------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_group_policy_attachment" "this" {
+  provider = aws.auth_session
+
+  group      = var.service_account_group
+  policy_arn = aws_iam_policy.group.arn
+}

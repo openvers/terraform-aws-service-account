@@ -20,6 +20,11 @@ variable "assume_role_policies" {
   }))
 }
 
+variable "service_account_group" {
+  type        = string
+  description = "Group name which the Service Account is associated to"
+}
+
 ## ---------------------------------------------------------------------------------------------------------------------
 ## OPTIONAL PARAMETERS
 ## These variables have defaults and may be overridden
